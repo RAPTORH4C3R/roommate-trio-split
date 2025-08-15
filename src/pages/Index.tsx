@@ -46,6 +46,7 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [categories, setCategories] = useState<any[]>([]);
+  const [editingExpense, setEditingExpense] = useState<any>(null);
 
   if (authLoading) {
     return (
@@ -156,6 +157,24 @@ const Index = () => {
     }
   };
 
+  const handleEditExpense = (expense: Expense) => {
+    setEditingExpense({
+      id: expense.id,
+      description: expense.description,
+      amount: expense.amount,
+      currency: expense.currency,
+      category_id: expense.category?.id,
+      paid_by: expense.paid_by.id,
+      payment_method: (expense as any).payment_method,
+      expense_date: expense.expense_date,
+    });
+  };
+
+  const handleEditComplete = () => {
+    setEditingExpense(null);
+    fetchExpenses();
+  };
+
   // Calculate stats
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const currentMonth = new Date();
@@ -246,7 +265,11 @@ const Index = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Add Expense Form */}
-            <ExpenseForm onExpenseAdded={fetchExpenses} />
+            <ExpenseForm 
+              onExpenseAdded={fetchExpenses} 
+              editingExpense={editingExpense}
+              onEditComplete={handleEditComplete}
+            />
 
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
@@ -293,7 +316,9 @@ const Index = () => {
                     key={expense.id}
                     expense={expense}
                     onDelete={handleDeleteExpense}
+                    onEdit={handleEditExpense}
                     canDelete={currentUserProfile?.id === expense.paid_by.id}
+                    canEdit={currentUserProfile?.id === expense.paid_by.id}
                   />
                 ))
               )}

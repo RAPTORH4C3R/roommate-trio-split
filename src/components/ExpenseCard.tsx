@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Calendar, User, CreditCard } from "lucide-react";
+import { Trash2, Calendar, User, CreditCard, Edit } from "lucide-react";
 import { format } from "date-fns";
 
 interface ExpenseCardProps {
@@ -22,13 +22,21 @@ interface ExpenseCardProps {
     };
   };
   onDelete?: (id: string) => void;
+  onEdit?: (expense: any) => void;
   canDelete?: boolean;
+  canEdit?: boolean;
 }
 
-export const ExpenseCard = ({ expense, onDelete, canDelete = false }: ExpenseCardProps) => {
+export const ExpenseCard = ({ expense, onDelete, onEdit, canDelete = false, canEdit = false }: ExpenseCardProps) => {
   const handleDelete = () => {
     if (onDelete) {
       onDelete(expense.id);
+    }
+  };
+
+  const handleEdit = () => {
+    if (onEdit) {
+      onEdit(expense);
     }
   };
 
@@ -81,16 +89,28 @@ export const ExpenseCard = ({ expense, onDelete, canDelete = false }: ExpenseCar
                 <span className="text-lg font-semibold text-secondary">
                   {expense.amount.toFixed(2)} {expense.currency}
                 </span>
-                {canDelete && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleDelete}
-                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
+                <div className="flex gap-1">
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleEdit}
+                      className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                  {canDelete && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleDelete}
+                      className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
             

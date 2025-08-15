@@ -16,6 +16,17 @@ import { useToast } from "@/hooks/use-toast";
 
 interface ExpenseFormProps {
   onExpenseAdded: () => void;
+  editingExpense?: {
+    id: string;
+    description: string;
+    amount: number;
+    currency: string;
+    category_id?: string;
+    paid_by: string;
+    payment_method?: string;
+    expense_date: string;
+  } | null;
+  onEditComplete?: () => void;
 }
 
 interface Category {
@@ -30,8 +41,8 @@ interface Profile {
   name: string;
 }
 
-export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: ExpenseFormProps) => {
+  const [isOpen, setIsOpen] = useState(!!editingExpense);
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
   const [currency, setCurrency] = useState("AED");
@@ -50,6 +61,19 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
     fetchCategories();
     fetchProfiles();
   }, []);
+
+  useEffect(() => {
+    if (editingExpense) {
+      setDescription(editingExpense.description);
+      setAmount(editingExpense.amount.toString());
+      setCurrency(editingExpense.currency);
+      setCategoryId(editingExpense.category_id || "");
+      setPaidBy(editingExpense.paid_by);
+      setPaymentMethod(editingExpense.payment_method || "cash");
+      setDate(new Date(editingExpense.expense_date));
+      setIsOpen(true);
+    }
+  }, [editingExpense]);
 
   const fetchCategories = async () => {
     const { data, error } = await supabase
@@ -92,27 +116,56 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
     setLoading(true);
 
     try {
-      const { error } = await supabase
-        .from('expenses')
-        .insert({
-          description,
-          amount: parseFloat(amount),
-          currency,
-          category_id: categoryId || null,
-          paid_by: paidBy,
-          payment_method: paymentMethod,
-          expense_date: format(date, 'yyyy-MM-dd'),
+      if (editingExpense) {
+        // Update existing expense
+        const { error } = await supabase
+          .from('expenses')
+          .update({
+            description,
+            amount: parseFloat(amount),
+            currency,
+            category_id: categoryId || null,
+            paid_by: paidBy,
+            payment_method: paymentMethod,
+            expense_date: format(date, 'yyyy-MM-dd'),
+          })
+          .eq('id', editingExpense.id);
+
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Expense Updated",
+          description: `${description} has been updated successfully.`,
         });
+        
+        onEditComplete?.();
+      } else {
+        // Create new expense
+        const { error } = await supabase
+          .from('expenses')
+          .insert({
+            description,
+            amount: parseFloat(amount),
+            currency,
+            category_id: categoryId || null,
+            paid_by: paidBy,
+            payment_method: paymentMethod,
+            expense_date: format(date, 'yyyy-MM-dd'),
+          });
 
-      if (error) {
-        throw error;
+        if (error) {
+          throw error;
+        }
+
+        toast({
+          title: "Expense Added",
+          description: `${description} for ${amount} ${currency} has been recorded.`,
+        });
+        
+        onExpenseAdded();
       }
-
-      toast({
-        title: "Expense Added",
-        description: `${description} for ${amount} ${currency} has been recorded.`,
-      });
-
       // Reset form
       setDescription("");
       setAmount("");
@@ -122,13 +175,11 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
       setPaidBy("");
       setPaymentMethod("cash");
       setIsOpen(false);
-      
-      onExpenseAdded();
     } catch (error: any) {
-      console.error('Error adding expense:', error);
+      console.error('Error saving expense:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add expense.",
+        description: error.message || "Failed to save expense.",
         variant: "destructive",
       });
     } finally {
@@ -136,7 +187,14 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
     }
   };
 
-  if (!isOpen) {
+  const handleClose = () => {
+    setIsOpen(false);
+    if (editingExpense && onEditComplete) {
+      onEditComplete();
+    }
+  };
+
+  if (!isOpen && !editingExpense) {
     return (
       <Button
         onClick={() => setIsOpen(true)}
@@ -152,7 +210,9 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
   return (
     <Card className="shadow-strong">
       <CardHeader>
-        <CardTitle className="text-xl font-semibold">Add New Expense</CardTitle>
+        <CardTitle className="text-xl font-semibold">
+          {editingExpense ? "Edit Expense" : "Add New Expense"}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -277,7 +337,7 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsOpen(false)}
+              onClick={handleClose}
               className="flex-1"
             >
               Cancel
@@ -287,7 +347,7 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
               disabled={loading}
               className="flex-1 gradient-primary text-primary-foreground"
             >
-              {loading ? "Adding..." : "Add Expense"}
+              {loading ? (editingExpense ? "Updating..." : "Adding...") : (editingExpense ? "Update Expense" : "Add Expense")}
             </Button>
           </div>
         </form>
