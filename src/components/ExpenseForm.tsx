@@ -104,7 +104,7 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!description || !amount || !date) {
+    if (!description || !amount || !paidBy || !date) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields.",
@@ -125,7 +125,7 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
             amount: parseFloat(amount),
             currency,
             category_id: categoryId || null,
-            paid_by: paidBy || null,
+            paid_by: paidBy,
             payment_method: paymentMethod,
             expense_date: format(date, 'yyyy-MM-dd'),
           })
@@ -150,7 +150,7 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
             amount: parseFloat(amount),
             currency,
             category_id: categoryId || null,
-            paid_by: paidBy || null,
+            paid_by: paidBy,
             payment_method: paymentMethod,
             expense_date: format(date, 'yyyy-MM-dd'),
           });
@@ -277,13 +277,12 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
           </div>
 
           <div>
-            <Label htmlFor="paidBy">Paid By</Label>
+            <Label htmlFor="paidBy">Paid By *</Label>
             <Select value={paidBy} onValueChange={setPaidBy}>
               <SelectTrigger className="mt-1">
-                <SelectValue placeholder="Who paid for this? (Optional)" />
+                <SelectValue placeholder="Who paid for this?" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Anonymous/Unknown</SelectItem>
                 {profiles.map((profile) => (
                   <SelectItem key={profile.id} value={profile.id}>
                     {profile.name}
