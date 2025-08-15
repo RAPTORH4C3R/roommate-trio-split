@@ -38,6 +38,7 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
   const [categoryId, setCategoryId] = useState("");
   const [date, setDate] = useState<Date>();
   const [paidBy, setPaidBy] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("cash");
   const [categories, setCategories] = useState<Category[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
@@ -99,6 +100,7 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
           currency,
           category_id: categoryId || null,
           paid_by: paidBy,
+          payment_method: paymentMethod,
           expense_date: format(date, 'yyyy-MM-dd'),
         });
 
@@ -118,6 +120,7 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
       setCategoryId("");
       setDate(undefined);
       setPaidBy("");
+      setPaymentMethod("cash");
       setIsOpen(false);
       
       onExpenseAdded();
@@ -225,6 +228,21 @@ export const ExpenseForm = ({ onExpenseAdded }: ExpenseFormProps) => {
                     {profile.name}
                   </SelectItem>
                 ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label htmlFor="paymentMethod">Payment Method</Label>
+            <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+              <SelectTrigger className="mt-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">💵 Cash</SelectItem>
+                <SelectItem value="credit_card">💳 Credit Card</SelectItem>
+                <SelectItem value="debit_card">💳 Debit Card</SelectItem>
+                <SelectItem value="bank_transfer">🏦 Bank Transfer</SelectItem>
               </SelectContent>
             </Select>
           </div>

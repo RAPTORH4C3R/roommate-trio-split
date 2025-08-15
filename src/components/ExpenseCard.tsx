@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Trash2, Calendar, User } from "lucide-react";
+import { Trash2, Calendar, User, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 
 interface ExpenseCardProps {
@@ -11,6 +11,7 @@ interface ExpenseCardProps {
     amount: number;
     currency: string;
     expense_date: string;
+    payment_method?: string;
     category: {
       name: string;
       icon: string;
@@ -28,6 +29,16 @@ export const ExpenseCard = ({ expense, onDelete, canDelete = false }: ExpenseCar
   const handleDelete = () => {
     if (onDelete) {
       onDelete(expense.id);
+    }
+  };
+
+  const getPaymentMethodDisplay = (method?: string) => {
+    switch (method) {
+      case 'credit_card': return '💳 Credit Card';
+      case 'debit_card': return '💳 Debit Card';
+      case 'bank_transfer': return '🏦 Bank Transfer';
+      case 'cash':
+      default: return '💵 Cash';
     }
   };
 
@@ -50,7 +61,11 @@ export const ExpenseCard = ({ expense, onDelete, canDelete = false }: ExpenseCar
               </div>
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                {expense.paid_by.name}
+                Paid by {expense.paid_by.name}
+              </div>
+              <div className="flex items-center gap-1">
+                <CreditCard className="h-3 w-3" />
+                {getPaymentMethodDisplay(expense.payment_method)}
               </div>
             </div>
 
