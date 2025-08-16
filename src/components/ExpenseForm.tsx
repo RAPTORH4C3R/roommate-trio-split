@@ -137,7 +137,7 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
             amount: parseFloat(amount),
             currency,
             category_id: categoryId || null,
-            paid_by: paidBy || null,
+            paid_by: paidBy === "anonymous" ? null : paidBy || null,
             payment_method: paymentMethod,
             expense_date: format(date, 'yyyy-MM-dd'),
           })
@@ -162,7 +162,7 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
             amount: parseFloat(amount),
             currency,
             category_id: categoryId || null,
-            paid_by: paidBy || null,
+            paid_by: paidBy === "anonymous" ? null : paidBy || null,
             payment_method: paymentMethod,
             expense_date: format(date, 'yyyy-MM-dd'),
           });
@@ -295,7 +295,7 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
                 <SelectValue placeholder="Who paid for this?" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Anonymous/Unknown</SelectItem>
+                <SelectItem value="anonymous">Anonymous/Unknown</SelectItem>
                 {profiles.map((profile) => (
                   <SelectItem key={profile.id} value={profile.id}>
                     {profile.name}
