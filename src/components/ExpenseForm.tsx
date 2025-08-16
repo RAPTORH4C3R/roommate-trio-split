@@ -76,28 +76,40 @@ export const ExpenseForm = ({ onExpenseAdded, editingExpense, onEditComplete }: 
   }, [editingExpense]);
 
   const fetchCategories = async () => {
-    const { data, error } = await supabase
-      .from('expense_categories')
-      .select('*')
-      .order('name');
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('expense_categories')
+        .select('*')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching categories:', error);
+        setCategories([]);
+      } else {
+        setCategories(data || []);
+      }
+    } catch (error) {
       console.error('Error fetching categories:', error);
-    } else {
-      setCategories(data || []);
+      setCategories([]);
     }
   };
 
   const fetchProfiles = async () => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id, name')
-      .order('name');
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, name')
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching profiles:', error);
+        setProfiles([]);
+      } else {
+        setProfiles(data || []);
+      }
+    } catch (error) {
       console.error('Error fetching profiles:', error);
-    } else {
-      setProfiles(data || []);
+      setProfiles([]);
     }
   };
 
