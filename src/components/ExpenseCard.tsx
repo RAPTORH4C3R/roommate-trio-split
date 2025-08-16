@@ -19,7 +19,7 @@ interface ExpenseCardProps {
     } | null;
     paid_by: {
       name: string;
-    };
+    } | null;
   };
   onDelete?: (id: string) => void;
   onEdit?: (expense: any) => void;
@@ -69,7 +69,7 @@ export const ExpenseCard = ({ expense, onDelete, onEdit, canDelete = false, canE
               </div>
               <div className="flex items-center gap-1">
                 <User className="h-3 w-3" />
-                Paid by {expense.paid_by.name}
+                Paid by {expense.paid_by?.name || 'Anonymous'}
               </div>
               <div className="flex items-center gap-1">
                 <CreditCard className="h-3 w-3" />

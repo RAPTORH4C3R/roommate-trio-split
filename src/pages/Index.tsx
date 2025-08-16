@@ -28,7 +28,7 @@ interface Expense {
   paid_by: {
     id: string;
     name: string;
-  };
+  } | null;
 }
 
 interface Profile {
@@ -164,7 +164,7 @@ const Index = () => {
       amount: expense.amount,
       currency: expense.currency,
       category_id: expense.category?.id,
-      paid_by: expense.paid_by.id,
+      paid_by: expense.paid_by?.id || '',
       payment_method: (expense as any).payment_method,
       expense_date: expense.expense_date,
     });
@@ -190,7 +190,7 @@ const Index = () => {
 
   // Calculate user balances
   const userBalances = profiles.map(profile => {
-    const userExpenses = expenses.filter(expense => expense.paid_by.id === profile.id);
+    const userExpenses = expenses.filter(expense => expense.paid_by?.id === profile.id);
     const totalPaid = userExpenses.reduce((sum, expense) => sum + expense.amount, 0);
     const totalOwed = totalExpenses / 3; // Equal split among 3
     const balance = totalPaid - totalOwed;
@@ -206,7 +206,7 @@ const Index = () => {
   // Filter expenses
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         expense.paid_by.name.toLowerCase().includes(searchTerm.toLowerCase());
+                         (expense.paid_by?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = filterCategory === "all" || expense.category?.id === filterCategory;
     return matchesSearch && matchesCategory;
   });
@@ -317,8 +317,8 @@ const Index = () => {
                     expense={expense}
                     onDelete={handleDeleteExpense}
                     onEdit={handleEditExpense}
-                    canDelete={currentUserProfile?.id === expense.paid_by.id}
-                    canEdit={currentUserProfile?.id === expense.paid_by.id}
+                    canDelete={currentUserProfile?.id === expense.paid_by?.id}
+                    canEdit={currentUserProfile?.id === expense.paid_by?.id}
                   />
                 ))
               )}
