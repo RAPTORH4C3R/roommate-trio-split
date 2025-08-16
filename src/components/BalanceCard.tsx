@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpRight, ArrowDownLeft, Users } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ArrowUpRight, ArrowDownLeft, Users, ExternalLink } from "lucide-react";
 
 interface BalanceCardProps {
   userBalances: {
@@ -63,8 +64,18 @@ export const BalanceCard = ({ userBalances, currency }: BalanceCardProps) => {
           </div>
         ))}
         
-        <div className="border-t pt-4 text-center text-sm text-muted-foreground">
-          Balances are calculated based on equal 3-way splits
+        <div className="border-t pt-4 space-y-3">
+          <div className="text-center text-sm text-muted-foreground">
+            Balances are calculated based on equal 3-way splits
+          </div>
+          <Button 
+            variant="outline" 
+            className="w-full"
+            onClick={() => window.open('https://splitwise.com', '_blank')}
+          >
+            <ExternalLink className="h-4 w-4 mr-2" />
+            Access Full Settlement Details
+          </Button>
         </div>
       </CardContent>
     </Card>
