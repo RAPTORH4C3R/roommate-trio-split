@@ -48,6 +48,14 @@ const Index = () => {
   const [categories, setCategories] = useState<any[]>([]);
   const [editingExpense, setEditingExpense] = useState<any>(null);
 
+  // All hooks MUST be called before any early returns
+  useEffect(() => {
+    if (user) {
+      fetchData();
+    }
+  }, [user]);
+
+  // Early returns AFTER all hooks
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -62,12 +70,6 @@ const Index = () => {
   if (!user || !session) {
     return <Navigate to="/auth" replace />;
   }
-
-  useEffect(() => {
-    if (user) {
-      fetchData();
-    }
-  }, [user]);
 
   const fetchData = async () => {
     try {
