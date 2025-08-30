@@ -8,8 +8,7 @@ interface BalanceCardProps {
     paid: number;
     owes: number;
     balance: number;
-    repaymentsMade?: number;
-    repaymentsReceived?: number;
+    settlementsAmount?: number;
   }[];
   currency: string;
   repayments?: {
@@ -66,14 +65,9 @@ export const BalanceCard = ({ userBalances, currency, repayments = [] }: Balance
                   Share: {user.owes.toFixed(2)} {currency}
                 </div>
               </div>
-              {(user.repaymentsMade || user.repaymentsReceived) && (
-                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
-                  {user.repaymentsMade ? (
-                    <span>Repaid: {user.repaymentsMade.toFixed(2)} {currency}</span>
-                  ) : null}
-                  {user.repaymentsReceived ? (
-                    <span>Received: {user.repaymentsReceived.toFixed(2)} {currency}</span>
-                  ) : null}
+              {user.settlementsAmount && user.settlementsAmount > 0 && (
+                <div className="text-xs text-muted-foreground mt-1">
+                  <span>Settled: {user.settlementsAmount.toFixed(2)} {currency}</span>
                 </div>
               )}
             </div>
@@ -92,7 +86,7 @@ export const BalanceCard = ({ userBalances, currency, repayments = [] }: Balance
         ))}
         
         <div className="border-t pt-4 text-center text-sm text-muted-foreground">
-          Balances are calculated based on equal 3-way splits including repayments
+          Balances are calculated based on equal 3-way splits including debt settlements
         </div>
       </CardContent>
     </Card>

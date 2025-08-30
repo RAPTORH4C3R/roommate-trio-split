@@ -15,20 +15,30 @@ interface Profile {
   user_id: string;
 }
 
+interface UserBalance {
+  name: string;
+  paid: number;
+  owes: number;
+  balance: number;
+  repaymentsMade?: number;
+  repaymentsReceived?: number;
+}
+
 interface RepaymentFormProps {
   profiles: Profile[];
   currentUserId?: string;
+  userBalance?: UserBalance;
   onRepaymentAdded?: () => void;
 }
 
-export const RepaymentForm = ({ profiles, currentUserId, onRepaymentAdded }: RepaymentFormProps) => {
+export const RepaymentForm = ({ profiles, currentUserId, userBalance, onRepaymentAdded }: RepaymentFormProps) => {
   const [open, setOpen] = useState(false);
   const [amount, setAmount] = useState("");
-  const [toUserId, setToUserId] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentUserProfile = profiles.find(p => p.user_id === currentUserId);
+  const maxSettlement = userBalance?.balance < 0 ? Math.abs(userBalance.balance) : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,18 +48,19 @@ export const RepaymentForm = ({ profiles, currentUserId, onRepaymentAdded }: Rep
       return;
     }
 
-    if (!amount || !toUserId) {
-      toast.error("Please fill in all required fields");
+    if (!amount) {
+      toast.error("Please enter an amount");
       return;
     }
 
-    if (parseFloat(amount) <= 0) {
+    const settlementAmount = parseFloat(amount);
+    if (settlementAmount <= 0) {
       toast.error("Amount must be greater than 0");
       return;
     }
 
-    if (toUserId === currentUserProfile.id) {
-      toast.error("You cannot repay yourself");
+    if (settlementAmount > maxSettlement) {
+      toast.error(`Amount cannot exceed your debt of ${maxSettlement.toFixed(2)}`);
       return;
     }
 
@@ -60,77 +71,70 @@ export const RepaymentForm = ({ profiles, currentUserId, onRepaymentAdded }: Rep
         .from('repayments')
         .insert({
           from_user_id: currentUserProfile.id,
-          to_user_id: toUserId,
-          amount: parseFloat(amount),
-          description: description.trim() || null,
+          to_user_id: currentUserProfile.id, // Settlement to self
+          amount: settlementAmount,
+          description: description.trim() || 'Debt settlement',
         });
 
       if (error) throw error;
 
-      toast.success("Repayment added successfully!");
+      toast.success("Debt settlement recorded successfully!");
       setAmount("");
-      setToUserId("");
       setDescription("");
       setOpen(false);
       onRepaymentAdded?.();
     } catch (error) {
       console.error('Error adding repayment:', error);
-      toast.error("Failed to add repayment");
+      toast.error("Failed to record settlement");
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Only show if user has debt to settle
+  if (!userBalance || userBalance.balance >= 0) {
+    return null;
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2">
           <DollarSign className="h-4 w-4" />
-          Add Repayment
+          Settle Debt
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add Repayment</DialogTitle>
+          <DialogTitle>Settle Your Debt</DialogTitle>
+          <p className="text-sm text-muted-foreground">
+            You owe: {maxSettlement.toFixed(2)} AED
+          </p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount *</Label>
+            <Label htmlFor="amount">Settlement Amount *</Label>
             <Input
               id="amount"
               type="number"
               step="0.01"
               min="0.01"
+              max={maxSettlement}
               placeholder="0.00"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               required
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="toUser">Repaying To *</Label>
-            <Select value={toUserId} onValueChange={setToUserId} required>
-              <SelectTrigger>
-                <SelectValue placeholder="Select who you're repaying" />
-              </SelectTrigger>
-              <SelectContent>
-                {profiles
-                  .filter(profile => profile.id !== currentUserProfile?.id)
-                  .map((profile) => (
-                    <SelectItem key={profile.id} value={profile.id}>
-                      {profile.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <p className="text-xs text-muted-foreground">
+              Maximum: {maxSettlement.toFixed(2)} AED
+            </p>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="description">Description (Optional)</Label>
             <Textarea
               id="description"
-              placeholder="What is this repayment for?"
+              placeholder="Add a note about this settlement..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="min-h-[80px]"
@@ -142,7 +146,7 @@ export const RepaymentForm = ({ profiles, currentUserId, onRepaymentAdded }: Rep
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="flex-1">
-              {isSubmitting ? "Adding..." : "Confirm"}
+              {isSubmitting ? "Recording..." : "Settle"}
             </Button>
           </div>
         </form>

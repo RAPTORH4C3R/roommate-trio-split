@@ -227,31 +227,25 @@ const Index = () => {
   
   const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-  // Calculate user balances including repayments
+  // Calculate user balances including settlements
   const userBalances = profiles.map(profile => {
     const userExpenses = expenses.filter(expense => expense.paid_by?.id === profile.id);
     const totalPaid = userExpenses.reduce((sum, expense) => sum + expense.amount, 0);
     const totalOwed = totalExpenses / 3; // Equal split among 3
     
-    // Calculate repayments made by this user
-    const repaymentsMade = repayments
-      .filter(repayment => repayment.from_user_id === profile.id)
+    // Calculate debt settlements made by this user (self-settlements)
+    const settlementsAmount = repayments
+      .filter(repayment => repayment.from_user_id === profile.id && repayment.to_user_id === profile.id)
       .reduce((sum, repayment) => sum + repayment.amount, 0);
     
-    // Calculate repayments received by this user
-    const repaymentsReceived = repayments
-      .filter(repayment => repayment.to_user_id === profile.id)
-      .reduce((sum, repayment) => sum + repayment.amount, 0);
-    
-    const balance = totalPaid - totalOwed - repaymentsMade + repaymentsReceived;
+    const balance = totalPaid - totalOwed + settlementsAmount;
 
     return {
       name: profile.name,
       paid: totalPaid,
       owes: totalOwed,
       balance: balance,
-      repaymentsMade,
-      repaymentsReceived
+      settlementsAmount
     };
   });
 
@@ -323,11 +317,12 @@ const Index = () => {
               onEditComplete={handleEditComplete}
             />
 
-            {/* Add Repayment Button */}
+            {/* Add Settlement Button */}
             <div className="flex justify-end">
               <RepaymentForm 
                 profiles={profiles}
                 currentUserId={user.id}
+                userBalance={userBalances.find(b => b.name === currentUserProfile?.name)}
                 onRepaymentAdded={fetchRepayments}
               />
             </div>
