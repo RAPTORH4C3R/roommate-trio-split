@@ -8,11 +8,29 @@ interface BalanceCardProps {
     paid: number;
     owes: number;
     balance: number;
+    repaymentsMade?: number;
+    repaymentsReceived?: number;
   }[];
   currency: string;
+  repayments?: {
+    id: string;
+    from_user_id: string;
+    to_user_id: string;
+    amount: number;
+    description?: string;
+    repayment_date: string;
+    from_user: {
+      id: string;
+      name: string;
+    };
+    to_user: {
+      id: string;
+      name: string;
+    };
+  }[];
 }
 
-export const BalanceCard = ({ userBalances, currency }: BalanceCardProps) => {
+export const BalanceCard = ({ userBalances, currency, repayments = [] }: BalanceCardProps) => {
   const getBalanceColor = (balance: number) => {
     if (balance > 0) return "text-green-600";
     if (balance < 0) return "text-red-600";
@@ -48,6 +66,16 @@ export const BalanceCard = ({ userBalances, currency }: BalanceCardProps) => {
                   Share: {user.owes.toFixed(2)} {currency}
                 </div>
               </div>
+              {(user.repaymentsMade || user.repaymentsReceived) && (
+                <div className="flex items-center gap-4 text-xs text-muted-foreground mt-1">
+                  {user.repaymentsMade ? (
+                    <span>Repaid: {user.repaymentsMade.toFixed(2)} {currency}</span>
+                  ) : null}
+                  {user.repaymentsReceived ? (
+                    <span>Received: {user.repaymentsReceived.toFixed(2)} {currency}</span>
+                  ) : null}
+                </div>
+              )}
             </div>
             <div className="text-right">
               <div className={`text-lg font-semibold ${getBalanceColor(user.balance)}`}>
@@ -64,7 +92,7 @@ export const BalanceCard = ({ userBalances, currency }: BalanceCardProps) => {
         ))}
         
         <div className="border-t pt-4 text-center text-sm text-muted-foreground">
-          Balances are calculated based on equal 3-way splits
+          Balances are calculated based on equal 3-way splits including repayments
         </div>
       </CardContent>
     </Card>

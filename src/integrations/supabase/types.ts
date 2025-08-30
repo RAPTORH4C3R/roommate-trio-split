@@ -170,6 +170,54 @@ export type Database = {
         }
         Relationships: []
       }
+      repayments: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          from_user_id: string
+          id: string
+          repayment_date: string
+          to_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          from_user_id: string
+          id?: string
+          repayment_date?: string
+          to_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          from_user_id?: string
+          id?: string
+          repayment_date?: string
+          to_user_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "repayments_from_user_id_fkey"
+            columns: ["from_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "repayments_to_user_id_fkey"
+            columns: ["to_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

@@ -10,6 +10,7 @@ import { ExpenseForm } from "@/components/ExpenseForm";
 import { ExpenseCard } from "@/components/ExpenseCard";
 import { DashboardStats } from "@/components/DashboardStats";
 import { BalanceCard } from "@/components/BalanceCard";
+import { RepaymentForm } from "@/components/RepaymentForm";
 import { LogOut, Search, Filter, Users, DollarSign } from "lucide-react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
@@ -37,11 +38,29 @@ interface Profile {
   user_id: string;
 }
 
+interface Repayment {
+  id: string;
+  from_user_id: string;
+  to_user_id: string;
+  amount: number;
+  description?: string;
+  repayment_date: string;
+  from_user: {
+    id: string;
+    name: string;
+  };
+  to_user: {
+    id: string;
+    name: string;
+  };
+}
+
 const Index = () => {
   const { user, session, loading: authLoading, signOut } = useAuth();
   const { toast } = useToast();
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [repayments, setRepayments] = useState<Repayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -76,7 +95,8 @@ const Index = () => {
       await Promise.all([
         fetchExpenses(),
         fetchProfiles(),
-        fetchCategories()
+        fetchCategories(),
+        fetchRepayments()
       ]);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -131,6 +151,23 @@ const Index = () => {
       console.error('Error fetching categories:', error);
     } else {
       setCategories(data || []);
+    }
+  };
+
+  const fetchRepayments = async () => {
+    const { data, error } = await supabase
+      .from('repayments')
+      .select(`
+        *,
+        from_user:profiles!repayments_from_user_id_fkey(id, name),
+        to_user:profiles!repayments_to_user_id_fkey(id, name)
+      `)
+      .order('repayment_date', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching repayments:', error);
+    } else {
+      setRepayments(data || []);
     }
   };
 
@@ -190,18 +227,31 @@ const Index = () => {
   
   const monthlyTotal = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
 
-  // Calculate user balances
+  // Calculate user balances including repayments
   const userBalances = profiles.map(profile => {
     const userExpenses = expenses.filter(expense => expense.paid_by?.id === profile.id);
     const totalPaid = userExpenses.reduce((sum, expense) => sum + expense.amount, 0);
     const totalOwed = totalExpenses / 3; // Equal split among 3
-    const balance = totalPaid - totalOwed;
+    
+    // Calculate repayments made by this user
+    const repaymentsMade = repayments
+      .filter(repayment => repayment.from_user_id === profile.id)
+      .reduce((sum, repayment) => sum + repayment.amount, 0);
+    
+    // Calculate repayments received by this user
+    const repaymentsReceived = repayments
+      .filter(repayment => repayment.to_user_id === profile.id)
+      .reduce((sum, repayment) => sum + repayment.amount, 0);
+    
+    const balance = totalPaid - totalOwed - repaymentsMade + repaymentsReceived;
 
     return {
       name: profile.name,
       paid: totalPaid,
       owes: totalOwed,
-      balance: balance
+      balance: balance,
+      repaymentsMade,
+      repaymentsReceived
     };
   });
 
@@ -273,6 +323,15 @@ const Index = () => {
               onEditComplete={handleEditComplete}
             />
 
+            {/* Add Repayment Button */}
+            <div className="flex justify-end">
+              <RepaymentForm 
+                profiles={profiles}
+                currentUserId={user.id}
+                onRepaymentAdded={fetchRepayments}
+              />
+            </div>
+
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 relative">
@@ -329,7 +388,7 @@ const Index = () => {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <BalanceCard userBalances={userBalances} currency="AED" />
+            <BalanceCard userBalances={userBalances} currency="AED" repayments={repayments} />
           </div>
         </div>
       </div>
