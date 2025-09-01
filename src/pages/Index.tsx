@@ -11,8 +11,9 @@ import { ExpenseCard } from "@/components/ExpenseCard";
 import { DashboardStats } from "@/components/DashboardStats";
 import { BalanceCard } from "@/components/BalanceCard";
 import { RepaymentForm } from "@/components/RepaymentForm";
-import { LogOut, Search, Filter, Users, DollarSign } from "lucide-react";
-import { format, startOfMonth, endOfMonth } from "date-fns";
+import { LogOut, Search, Filter, Users, DollarSign, Calendar } from "lucide-react";
+import { format, startOfMonth, endOfMonth, isSameMonth } from "date-fns";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Expense {
   id: string;
@@ -257,6 +258,38 @@ const Index = () => {
     return matchesSearch && matchesCategory;
   });
 
+  // Group expenses by month and year
+  const currentMonthExpenses = filteredExpenses.filter(expense => {
+    const expenseDate = new Date(expense.expense_date);
+    return isSameMonth(expenseDate, currentMonth);
+  });
+
+  // Group historical expenses by month
+  const groupExpensesByMonth = (expenses: Expense[]) => {
+    const groups: { [key: string]: { expenses: Expense[], total: number, monthYear: string } } = {};
+    
+    expenses.forEach(expense => {
+      const expenseDate = new Date(expense.expense_date);
+      if (!isSameMonth(expenseDate, currentMonth)) { // Exclude current month
+        const monthYear = format(expenseDate, 'MMMM yyyy');
+        const key = format(expenseDate, 'yyyy-MM');
+        
+        if (!groups[key]) {
+          groups[key] = { expenses: [], total: 0, monthYear };
+        }
+        groups[key].expenses.push(expense);
+        groups[key].total += expense.amount;
+      }
+    });
+    
+    // Sort by date descending (most recent first)
+    return Object.entries(groups)
+      .sort(([a], [b]) => b.localeCompare(a))
+      .map(([key, data]) => ({ key, ...data }));
+  };
+
+  const historicalMonths = groupExpensesByMonth(filteredExpenses);
+
   const currentUserProfile = profiles.find(p => p.user_id === user.id);
 
   if (loading) {
@@ -357,28 +390,86 @@ const Index = () => {
               </Select>
             </div>
 
-            {/* Expenses List */}
-            <div className="space-y-4">
-              <h2 className="text-xl font-semibold text-foreground">Recent Expenses</h2>
-              {filteredExpenses.length === 0 ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No expenses found</p>
-                  <p className="text-sm">Add your first expense to get started!</p>
+            {/* Monthly Expense Tabs */}
+            <Tabs defaultValue="current" className="space-y-4">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="current" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Recent Expenses
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Monthly History
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="current" className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-foreground">
+                    {format(currentMonth, 'MMMM yyyy')}
+                  </h3>
+                  <div className="text-sm text-muted-foreground">
+                    {currentMonthExpenses.length} expenses • AED {currentMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0).toFixed(2)}
+                  </div>
                 </div>
-              ) : (
-                filteredExpenses.map((expense) => (
-                  <ExpenseCard
-                    key={expense.id}
-                    expense={expense}
-                    onDelete={handleDeleteExpense}
-                    onEdit={handleEditExpense}
-                    canDelete={currentUserProfile?.id === expense.paid_by?.id}
-                    canEdit={currentUserProfile?.id === expense.paid_by?.id}
-                  />
-                ))
-              )}
-            </div>
+                
+                {currentMonthExpenses.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <DollarSign className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">No expenses this month</p>
+                    <p className="text-sm">Add your first expense to get started!</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {currentMonthExpenses.map((expense) => (
+                      <ExpenseCard
+                        key={expense.id}
+                        expense={expense}
+                        onDelete={handleDeleteExpense}
+                        onEdit={handleEditExpense}
+                        canDelete={currentUserProfile?.id === expense.paid_by?.id}
+                        canEdit={currentUserProfile?.id === expense.paid_by?.id}
+                      />
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="history" className="space-y-4">
+                {historicalMonths.length === 0 ? (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-lg font-medium">No historical data</p>
+                    <p className="text-sm">Past month expenses will appear here</p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {historicalMonths.map((monthData) => (
+                      <div key={monthData.key} className="border rounded-lg p-4 bg-card">
+                        <div className="flex items-center justify-between mb-4 pb-2 border-b">
+                          <h4 className="text-lg font-medium text-foreground">{monthData.monthYear}</h4>
+                          <div className="text-sm text-muted-foreground">
+                            {monthData.expenses.length} expenses • AED {monthData.total.toFixed(2)}
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          {monthData.expenses.map((expense) => (
+                            <ExpenseCard
+                              key={expense.id}
+                              expense={expense}
+                              onDelete={handleDeleteExpense}
+                              onEdit={handleEditExpense}
+                              canDelete={currentUserProfile?.id === expense.paid_by?.id}
+                              canEdit={currentUserProfile?.id === expense.paid_by?.id}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Sidebar */}
