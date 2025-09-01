@@ -266,7 +266,7 @@ const Index = () => {
 
   // Group historical expenses by month
   const groupExpensesByMonth = (expenses: Expense[]) => {
-    const groups: { [key: string]: { expenses: Expense[], total: number, monthYear: string } } = {};
+    const groups: { [key: string]: { expenses: Expense[], total: number, monthYear: string, date: Date } } = {};
     
     expenses.forEach(expense => {
       const expenseDate = new Date(expense.expense_date);
@@ -275,16 +275,21 @@ const Index = () => {
         const key = format(expenseDate, 'yyyy-MM');
         
         if (!groups[key]) {
-          groups[key] = { expenses: [], total: 0, monthYear };
+          groups[key] = { 
+            expenses: [], 
+            total: 0, 
+            monthYear,
+            date: new Date(expenseDate.getFullYear(), expenseDate.getMonth(), 1)
+          };
         }
         groups[key].expenses.push(expense);
         groups[key].total += expense.amount;
       }
     });
     
-    // Sort by date descending (most recent first)
+    // Sort by date descending (most recent months first)
     return Object.entries(groups)
-      .sort(([a], [b]) => b.localeCompare(a))
+      .sort(([, a], [, b]) => b.date.getTime() - a.date.getTime())
       .map(([key, data]) => ({ key, ...data }));
   };
 
