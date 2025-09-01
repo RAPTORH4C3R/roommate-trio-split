@@ -106,9 +106,11 @@ export const RepaymentForm = ({ profiles, currentUserId, userBalance, onRepaymen
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Settle Your Debt</DialogTitle>
+          <DialogTitle>
+            {currentUserProfile?.name} - Settle Your Debt
+          </DialogTitle>
           <p className="text-sm text-muted-foreground">
-            You owe: {maxSettlement.toFixed(2)} AED
+            Account: <span className="font-medium text-foreground">{currentUserProfile?.name}</span> owes: <span className="font-medium text-red-600">{maxSettlement.toFixed(2)} AED</span>
           </p>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
