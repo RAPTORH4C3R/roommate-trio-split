@@ -11,9 +11,10 @@ import { ExpenseCard } from "@/components/ExpenseCard";
 import { DashboardStats } from "@/components/DashboardStats";
 import { BalanceCard } from "@/components/BalanceCard";
 import { RepaymentForm } from "@/components/RepaymentForm";
-import { LogOut, Search, Filter, Users, DollarSign, Calendar } from "lucide-react";
+import { LogOut, Search, Filter, Users, DollarSign, Calendar, ChevronDown } from "lucide-react";
 import { format, startOfMonth, endOfMonth, isSameMonth } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface Expense {
   id: string;
@@ -448,30 +449,36 @@ const Index = () => {
                     <p className="text-sm">Past month expenses will appear here</p>
                   </div>
                 ) : (
-                  <div className="space-y-6">
+                  <Accordion type="single" collapsible className="w-full">
                     {historicalMonths.map((monthData) => (
-                      <div key={monthData.key} className="border rounded-lg p-4 bg-card">
-                        <div className="flex items-center justify-between mb-4 pb-2 border-b">
-                          <h4 className="text-lg font-medium text-foreground">{monthData.monthYear}</h4>
-                          <div className="text-sm text-muted-foreground">
-                            {monthData.expenses.length} expenses • AED {monthData.total.toFixed(2)}
+                      <AccordionItem key={monthData.key} value={monthData.key} className="border rounded-lg mb-2">
+                        <AccordionTrigger className="px-4 py-3 hover:no-underline">
+                          <div className="flex items-center justify-between w-full">
+                            <div className="text-left">
+                              <h4 className="text-lg font-medium text-foreground">{monthData.monthYear}</h4>
+                            </div>
+                            <div className="text-sm text-muted-foreground mr-4">
+                              {monthData.expenses.length} expenses • AED {monthData.total.toFixed(2)}
+                            </div>
                           </div>
-                        </div>
-                        <div className="space-y-3">
-                          {monthData.expenses.map((expense) => (
-                            <ExpenseCard
-                              key={expense.id}
-                              expense={expense}
-                              onDelete={handleDeleteExpense}
-                              onEdit={handleEditExpense}
-                              canDelete={currentUserProfile?.id === expense.paid_by?.id}
-                              canEdit={currentUserProfile?.id === expense.paid_by?.id}
-                            />
-                          ))}
-                        </div>
-                      </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="px-4 pb-4">
+                          <div className="space-y-3 pt-2">
+                            {monthData.expenses.map((expense) => (
+                              <ExpenseCard
+                                key={expense.id}
+                                expense={expense}
+                                onDelete={handleDeleteExpense}
+                                onEdit={handleEditExpense}
+                                canDelete={currentUserProfile?.id === expense.paid_by?.id}
+                                canEdit={currentUserProfile?.id === expense.paid_by?.id}
+                              />
+                            ))}
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
                     ))}
-                  </div>
+                  </Accordion>
                 )}
               </TabsContent>
             </Tabs>
