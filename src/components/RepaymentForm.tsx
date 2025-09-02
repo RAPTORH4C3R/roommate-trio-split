@@ -38,13 +38,7 @@ export const RepaymentForm = ({ profiles, currentUserId, userBalance, onRepaymen
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const currentUserProfile = profiles.find(p => p.user_id === currentUserId);
-  
-  // Only allow settlement if this is the current user's own debt
-  const canSettle = currentUserProfile && userBalance && 
-    userBalance.name === currentUserProfile.name && 
-    userBalance.balance < 0;
-    
-  const maxSettlement = canSettle ? Math.abs(userBalance.balance) : 0;
+  const maxSettlement = userBalance?.balance < 0 ? Math.abs(userBalance.balance) : 0;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +91,8 @@ export const RepaymentForm = ({ profiles, currentUserId, userBalance, onRepaymen
     }
   };
 
-  // Only show settlement button if current user can settle their own debt
-  if (!canSettle) {
+  // Only show if user has debt to settle
+  if (!userBalance || userBalance.balance >= 0) {
     return null;
   }
 

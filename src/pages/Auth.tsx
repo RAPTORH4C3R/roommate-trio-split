@@ -11,8 +11,7 @@ import { Users, DollarSign } from "lucide-react";
 
 export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
-  const [isResetting, setIsResetting] = useState(false);
-  const { user, signUp, signIn, resetPassword } = useAuth();
+  const { user, signUp, signIn } = useAuth();
   const { toast } = useToast();
 
   if (user) {
@@ -83,39 +82,6 @@ export default function Auth() {
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setIsResetting(true);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("reset-email") as string;
-
-    try {
-      const { error } = await resetPassword(email);
-      
-      if (error) {
-        toast({
-          title: "Reset Password Error",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Reset Link Sent",
-          description: "Please check your email for password reset instructions.",
-        });
-      }
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message || "An unexpected error occurred",
-        variant: "destructive",
-      });
-    } finally {
-      setIsResetting(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-6">
@@ -141,10 +107,9 @@ export default function Auth() {
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
-                <TabsTrigger value="reset">Reset</TabsTrigger>
               </TabsList>
 
               <TabsContent value="signin" className="space-y-4 mt-4">
@@ -176,31 +141,6 @@ export default function Auth() {
                     {isLoading ? "Signing In..." : "Sign In"}
                   </Button>
                 </form>
-              </TabsContent>
-
-              <TabsContent value="reset" className="space-y-4 mt-4">
-                <form onSubmit={handleResetPassword} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reset-email">Email Address</Label>
-                    <Input
-                      id="reset-email"
-                      name="reset-email"
-                      type="email"
-                      placeholder="your@email.com"
-                      required
-                    />
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full gradient-primary text-primary-foreground"
-                    disabled={isResetting}
-                  >
-                    {isResetting ? "Sending Reset Link..." : "Send Reset Link"}
-                  </Button>
-                </form>
-                <div className="text-center text-sm text-muted-foreground">
-                  Remember your password? Switch to Sign In tab.
-                </div>
               </TabsContent>
 
               <TabsContent value="signup" className="space-y-4 mt-4">
