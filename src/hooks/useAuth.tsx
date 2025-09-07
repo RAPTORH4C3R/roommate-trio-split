@@ -82,12 +82,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      return { error };
+    } catch (networkError) {
+      console.error('Network error during sign in:', networkError);
+      return { 
+        error: { 
+          message: 'Network connection failed. Please check if your Supabase project is active.' 
+        } 
+      };
+    }
   };
 
   const signOut = async () => {
