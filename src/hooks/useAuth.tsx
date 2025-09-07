@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Network error during sign in:', networkError);
       return { 
         error: { 
-          message: 'Network connection failed. Please check if your Supabase project is active.' 
+          message: 'Cannot connect to Supabase. Your project may be paused or there are configuration issues. Please check your Supabase dashboard.' 
         } 
       };
     }
