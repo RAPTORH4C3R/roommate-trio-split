@@ -20,10 +20,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Set timeout to prevent infinite loading
+    const loadingTimeout = setTimeout(() => {
+      console.log('Auth loading timeout - setting user to null');
+      setLoading(false);
+      setSession(null);
+      setUser(null);
+    }, 5000); // 5 second timeout
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state change:', event, session?.user?.id);
+        clearTimeout(loadingTimeout);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
@@ -34,12 +43,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         console.log('Initial session:', session?.user?.id);
+        clearTimeout(loadingTimeout);
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
       })
       .catch((error) => {
         console.error('Failed to get session:', error);
+        clearTimeout(loadingTimeout);
         // Clear potentially corrupted auth data
         localStorage.removeItem('supabase.auth.token');
         setSession(null);
@@ -47,7 +58,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(loadingTimeout);
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
