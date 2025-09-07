@@ -25,11 +25,11 @@ export default function Auth() {
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const defaultPassword = "123456"; // Default password for all users
     const name = formData.get("name") as string;
 
     try {
-      const { error } = await signUp(email, password, name);
+      const { error } = await signUp(email, defaultPassword, name);
       
       if (error) {
         toast({
@@ -40,7 +40,7 @@ export default function Auth() {
       } else {
         toast({
           title: "Account Created",
-          description: "Please check your email to verify your account.",
+          description: "You can now sign in with your email.",
         });
       }
     } catch (error: any) {
@@ -60,10 +60,10 @@ export default function Auth() {
 
     const formData = new FormData(e.currentTarget);
     const email = formData.get("email") as string;
-    const password = formData.get("password") as string;
+    const defaultPassword = "123456"; // Default password for all users
 
     try {
-      const { error } = await signIn(email, password);
+      const { error } = await signIn(email, defaultPassword);
       
       if (error) {
         toast({
@@ -160,12 +160,14 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signin-password">Password</Label>
+                    <Label htmlFor="signin-password">Password (default: 123456)</Label>
                     <Input
                       id="signin-password"
                       name="password"
-                      type="password"
-                      required
+                      type="text"
+                      value="123456"
+                      readOnly
+                      className="bg-muted"
                     />
                   </div>
                   <Button
@@ -226,12 +228,14 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
+                    <Label htmlFor="signup-password">Password (default: 123456)</Label>
                     <Input
                       id="signup-password"
                       name="password"
-                      type="password"
-                      required
+                      type="text"
+                      value="123456"
+                      readOnly
+                      className="bg-muted"
                     />
                   </div>
                   <Button
