@@ -19,74 +19,67 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let subscription: any;
+    // Clear localStorage completely to fix DNS issues
+    localStorage.clear();
     
-    // Clear any corrupted session data first
-    const clearCorruptedAuth = async () => {
-      try {
-        await supabase.auth.signOut({ scope: 'local' });
-        localStorage.removeItem('sb-rkotgbydeyhmiivdakga-auth-token');
-      } catch (e) {
-        // Ignore errors during cleanup
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state change:', event, session?.user?.id);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setLoading(false);
       }
-    };
+    );
 
-    const initAuth = async () => {
-      await clearCorruptedAuth();
-      
-      // Set up auth state listener
-      const { data } = supabase.auth.onAuthStateChange(
-        (event, session) => {
-          console.log('Auth state change:', event, session?.user?.id);
-          setSession(session);
-          setUser(session?.user ?? null);
-          setLoading(false);
-        }
-      );
-      
-      subscription = data.subscription;
+    // Check for existing session without async
+    setLoading(false);
 
-      // Check for existing session
-      const { data: { session } } = await supabase.auth.getSession();
-      console.log('Initial session:', session?.user?.id);
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    };
-
-    initAuth();
-
-    return () => {
-      if (subscription) {
-        subscription.unsubscribe();
-      }
-    };
+    return () => subscription.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name: name
+    try {
+      const redirectUrl = `${window.location.origin}/`;
+      
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: name
+          }
         }
-      }
-    });
-    
-    return { error };
+      });
+      
+      return { error };
+    } catch (networkError) {
+      console.error('Network error during sign up:', networkError);
+      return { 
+        error: { 
+          message: 'Network connection failed. Please check your internet connection and try again.' 
+        } 
+      };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    return { error };
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      return { error };
+    } catch (networkError) {
+      console.error('Network error during sign in:', networkError);
+      return { 
+        error: { 
+          message: 'Network connection failed. Please check your internet connection and try again.' 
+        } 
+      };
+    }
   };
 
   const signOut = async () => {
