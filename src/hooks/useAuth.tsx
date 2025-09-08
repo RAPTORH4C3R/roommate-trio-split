@@ -19,44 +19,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Clear any stale session data first
-    const clearStaleSession = async () => {
-      try {
-        await supabase.auth.signOut();
-      } catch (error) {
-        // Ignore errors when clearing
-      }
-    };
+    let isMounted = true;
 
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state change:', event, session?.user?.id);
-        if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+        if (isMounted) {
           setSession(session);
           setUser(session?.user ?? null);
-        } else if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
-    // Clear stale session and then check for existing session
-    clearStaleSession().finally(() => {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        console.log('Initial session:', session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }).catch((error) => {
-        console.error('Error getting session:', error);
-        setLoading(false);
-      });
-    });
+    // Get initial session
+    const getInitialSession = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error('Error getting session:', error);
+        }
+        if (isMounted) {
+          console.log('Initial session:', session?.user?.id);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Error in getInitialSession:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    getInitialSession();
+
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
