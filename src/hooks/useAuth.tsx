@@ -19,25 +19,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log('Auth state change:', event, session?.user?.id);
-        setSession(session);
-        setUser(session?.user ?? null);
-        setLoading(false);
+    let subscription: any;
+    
+    // Clear any corrupted session data first
+    const clearCorruptedAuth = async () => {
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+        localStorage.removeItem('sb-rkotgbydeyhmiivdakga-auth-token');
+      } catch (e) {
+        // Ignore errors during cleanup
       }
-    );
+    };
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initAuth = async () => {
+      await clearCorruptedAuth();
+      
+      // Set up auth state listener
+      const { data } = supabase.auth.onAuthStateChange(
+        (event, session) => {
+          console.log('Auth state change:', event, session?.user?.id);
+          setSession(session);
+          setUser(session?.user ?? null);
+          setLoading(false);
+        }
+      );
+      
+      subscription = data.subscription;
+
+      // Check for existing session
+      const { data: { session } } = await supabase.auth.getSession();
       console.log('Initial session:', session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-    });
+    };
 
-    return () => subscription.unsubscribe();
+    initAuth();
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
