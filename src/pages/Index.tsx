@@ -356,7 +356,7 @@ const Index = () => {
               onEditComplete={handleEditComplete}
             />
 
-            {/* Add Settlement Button - only show for current user's debt */}
+            {/* Add Settlement Button */}
             <div className="flex justify-end">
               <RepaymentForm 
                 profiles={profiles}

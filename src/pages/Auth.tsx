@@ -130,9 +130,7 @@ export default function Auth() {
                       id="signin-password"
                       name="password"
                       type="password"
-                      value="123456"
-                      readOnly
-                      className="bg-muted"
+                      required
                     />
                   </div>
                   <Button
@@ -168,14 +166,12 @@ export default function Auth() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password (Default)</Label>
+                    <Label htmlFor="signup-password">Password</Label>
                     <Input
                       id="signup-password"
                       name="password"
                       type="password"
-                      value="123456"
-                      readOnly
-                      className="bg-muted"
+                      required
                     />
                   </div>
                   <Button
