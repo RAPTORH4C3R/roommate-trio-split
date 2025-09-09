@@ -14,10 +14,19 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+    storageKey: 'sb-auth-token',
   },
   global: {
     headers: {
-      'Content-Type': 'application/json',
+      'x-my-custom-header': 'my-app-name',
+    },
+  },
+  db: {
+    schema: 'public',
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 2,
     },
   },
 });
