@@ -41,32 +41,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const signUp = async (email: string, password: string, name: string) => {
+    console.log('Attempting sign up with:', { email, name });
+    
     const redirectUrl = `${window.location.origin}/`;
     
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        emailRedirectTo: redirectUrl,
-        data: {
-          name: name
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: redirectUrl,
+          data: {
+            name: name
+          }
         }
+      });
+      
+      console.log('Sign up result:', { data, error });
+      
+      if (data?.session && data?.user) {
+        console.log('Immediate session from signup:', data.session);
+        setSession(data.session);
+        setUser(data.user);
       }
-    });
-    
-    return { error };
+      
+      return { error };
+    } catch (err) {
+      console.error('Sign up catch error:', err);
+      return { error: err };
+    }
   };
 
   const signIn = async (email: string, password: string) => {
     console.log('Attempting sign in with:', { email, supabaseUrl: 'https://rkotgbydeyhmiivdakga.supabase.co' });
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      // Test basic connection first
+      const { data: testData, error: testError } = await supabase.from('expense_categories').select('count').limit(1);
+      console.log('Database connection test:', { testData, testError });
+      
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      console.log('Sign in result:', { error });
+      console.log('Sign in result:', { data, error });
+      
+      if (data?.session) {
+        console.log('Session received:', data.session);
+        setSession(data.session);
+        setUser(data.session.user);
+      }
+      
       return { error };
     } catch (err) {
       console.error('Sign in catch error:', err);
