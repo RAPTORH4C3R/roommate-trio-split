@@ -16,11 +16,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     detectSessionInUrl: true,
     storageKey: 'sb-auth-token',
   },
-  global: {
-    headers: {
-      'x-my-custom-header': 'my-app-name',
-    },
-  },
   db: {
     schema: 'public',
   },
