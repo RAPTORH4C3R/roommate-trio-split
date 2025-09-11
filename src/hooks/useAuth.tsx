@@ -73,43 +73,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signIn = async (email: string, password: string) => {
-    console.log('Sign in attempt:', { 
-      email, 
+    console.log('Sign in attempt:', {
+      email,
       supabaseUrl: 'https://rkotgbydeyhmiivdakga.supabase.co',
       timestamp: new Date().toISOString()
     });
-    
+
     try {
-      // Test if we can reach Supabase at all
-      console.log('Testing Supabase connection...');
-      const healthCheck = await fetch('https://rkotgbydeyhmiivdakga.supabase.co/rest/v1/', {
-        method: 'HEAD',
-        headers: {
-          'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrb3RnYnlkZXlobWlpdmRha2dhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxOTQzOTEsImV4cCI6MjA3MDc3MDM5MX0.H05Pdl8bmDYJRnA9jBEMGIfkX7fRPQA9VxAuF79xZ7w',
-          'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJrb3RnYnlkZXlobWlpdmRha2dhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTUxOTQzOTEsImV4cCI6MjA3MDc3MDM5MX0.H05Pdl8bmDYJRnA9jBEMGIfkX7fRPQA9VxAuF79xZ7w'
-        }
-      });
-      console.log('Health check response:', healthCheck.status, healthCheck.statusText);
-      
-      console.log('Attempting auth sign in...');
+      // Directly attempt auth sign in via Supabase SDK (avoid external health checks that can fail due to CORS)
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.toLowerCase().trim(),
         password,
       });
-      
-      console.log('Auth sign in response:', { 
-        hasData: !!data, 
-        hasSession: !!data?.session, 
-        hasUser: !!data?.user, 
-        error: error ? { message: error.message, status: error.status } : null 
+
+      console.log('Auth sign in response:', {
+        hasData: !!data,
+        hasSession: !!data?.session,
+        hasUser: !!data?.user,
+        error: error ? { message: error.message, status: error.status } : null
       });
-      
+
       if (data?.session && data?.user) {
         console.log('Setting session and user from sign in');
         setSession(data.session);
         setUser(data.user);
       }
-      
+
       return { error };
     } catch (err: any) {
       console.error('Sign in error details:', {
@@ -121,7 +110,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return { error: err };
     }
   };
-
   const signOut = async () => {
     const { error } = await supabase.auth.signOut();
     return { error };
